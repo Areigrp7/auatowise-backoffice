@@ -23,6 +23,7 @@ app.use(express.json());
 app.use('/api/parts', require('./routes/parts'));
 app.use('/api/shops', require('./routes/shops'));
 app.use('/api/vehicles', require('./routes/vehicles'));
+app.use('/api/auth', require('./routes/auth')); // Add this line
 
 // Health check
 app.get('/health', (req, res) => {
@@ -30,7 +31,7 @@ app.get('/health', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
