@@ -13,7 +13,7 @@ const dbName = process.env.DB_NAME || 'autowise';
 
 async function setupDatabase() {
   const client = new Client(config);
-  
+
   try {
     await client.connect();
     console.log('Connected to PostgreSQL server');
@@ -78,29 +78,89 @@ async function runSchema() {
     `);
 
     // Parts table
+    // Update the setupDatabase.js file - add this to the runSchema function
+
+    // Make sure the parts table has all the correct columns
     await client.query(`
-      CREATE TABLE IF NOT EXISTS parts (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        brand VARCHAR(100) NOT NULL,
-        price DECIMAL(10,2) NOT NULL,
-        original_price DECIMAL(10,2),
-        rating DECIMAL(3,2),
-        reviews INTEGER DEFAULT 0,
-        is_oem BOOLEAN DEFAULT false,
-        seller VARCHAR(100),
-        shipping VARCHAR(100),
-        warranty VARCHAR(100),
-        in_stock BOOLEAN DEFAULT true,
-        image_url VARCHAR(500),
-        best_value_score DECIMAL(3,1),
-        features TEXT[],
-        compatibility TEXT[],
-        category VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+  CREATE TABLE IF NOT EXISTS parts (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    brand VARCHAR(100) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    original_price DECIMAL(10,2),
+    rating DECIMAL(3,2),
+    reviews INTEGER DEFAULT 0,
+    is_oem BOOLEAN DEFAULT false,
+    seller VARCHAR(100),
+    shipping VARCHAR(100),
+    warranty VARCHAR(100),
+    in_stock BOOLEAN DEFAULT true,
+    image_url VARCHAR(500),
+    best_value_score DECIMAL(3,1),
+    features TEXT[],
+    compatibility TEXT[],
+    category VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+    // Create order_items table
+    await client.query(`
+  CREATE TABLE IF NOT EXISTS order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+    part_id INTEGER REFERENCES parts(id),
+    part_name VARCHAR(255) NOT NULL,
+    part_brand VARCHAR(100) NOT NULL,
+    part_price DECIMAL(10,2) NOT NULL,
+    quantity INTEGER NOT NULL,
+    total_price DECIMAL(10,2) NOT NULL,
+    image_url VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+    // Create orders table
+    await client.query(`
+  CREATE TABLE IF NOT EXISTS orders (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    order_number VARCHAR(50) UNIQUE NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    subtotal DECIMAL(10,2) NOT NULL,
+    tax_amount DECIMAL(10,2) NOT NULL,
+    shipping_amount DECIMAL(10,2) NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    payment_status VARCHAR(50) DEFAULT 'pending',
+    payment_method VARCHAR(100),
+    payment_id VARCHAR(255),
+    shipping_address JSONB NOT NULL,
+    billing_address JSONB,
+    customer_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+    // Create shipping_addresses table
+    await client.query(`
+  CREATE TABLE IF NOT EXISTS shipping_addresses (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    full_name VARCHAR(255) NOT NULL,
+    address_line1 VARCHAR(255) NOT NULL,
+    address_line2 VARCHAR(255),
+    city VARCHAR(100) NOT NULL,
+    state VARCHAR(100) NOT NULL,
+    zip_code VARCHAR(20) NOT NULL,
+    country VARCHAR(100) DEFAULT 'United States',
+    phone VARCHAR(20),
+    is_default BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
     // Shops table
     await client.query(`
