@@ -25,6 +25,7 @@ app.use('/api/shops', require('./routes/shops'));
 app.use('/api/vehicles', require('./routes/vehicles'));
 app.use('/api/auth', require('./routes/auth')); // Add this line
 app.use('/api/checkout', require('./routes/checkout'));
+app.use('/api/search', require('./routes/search'));
 
 // Health check
 app.get('/health', (req, res) => {
