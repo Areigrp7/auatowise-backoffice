@@ -83,16 +83,23 @@ const db = require('../config/database');
 //     }
 // });
 
-
 router.get('/parts', async (req, res) => {
   const { year, make, model, q } = req.query;
 
-  if (!year || !make || !model) {
-    return res.status(400).json({ error: "year, make, model are required" });
-  }
-
   try {
-    const search = q ? `%${q}%` : `%`;
+    // If NO filters → Return ALL parts
+    if (!year || !make || !model) {
+      const allParts = await db.query(`
+        SELECT *
+        FROM parts
+        ORDER BY rating DESC, best_value_score DESC
+      `);
+
+      return res.json(allParts.rows);
+    }
+
+    // If filters exist → Build search keyword
+    const searchKeyword = q ? `%${q}%` : `%`;
 
     const sql = `
       SELECT p.*
@@ -106,33 +113,92 @@ router.get('/parts', async (req, res) => {
           CROSS JOIN LATERAL regexp_matches(value, '(\\d{4})-(\\d{4})') AS m
       ) AS comp
       WHERE 
+          -- Year range match
           $1::int BETWEEN comp.start_year AND comp.end_year
+
+          -- Make + Model match
           AND LOWER(comp.value) LIKE '%' || LOWER($2) || '%'
           AND LOWER(comp.value) LIKE '%' || LOWER($3) || '%'
+
+          -- Keyword search
           AND (
               p.name ILIKE $4 OR
               p.brand ILIKE $4 OR
               p.category ILIKE $4 OR
               p.features::text ILIKE $4
           )
+
+      GROUP BY p.id
       ORDER BY p.rating DESC, p.best_value_score DESC;
     `;
 
     const params = [
-      year,      // $1
-      make,      // $2
-      model,     // $3
-      search     // $4
+      year,        // $1
+      make,        // $2
+      model,       // $3
+      searchKeyword // $4
     ];
 
     const result = await db.query(sql, params);
-    res.json(result.rows);
+    return res.json(result.rows);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
+    console.error("❌ Search error:", err);
+    return res.status(500).json({ error: "Something went wrong", details: err });
   }
 });
+
+
+
+// router.get('/parts', async (req, res) => {
+//   const { year, make, model, q } = req.query;
+
+//   if (!year || !make || !model) {
+//     return res.status(400).json({ error: "year, make, model are required" });
+//   }
+
+//   try {
+//     const search = q ? `%${q}%` : `%`;
+
+//     const sql = `
+//       SELECT p.*
+//       FROM parts p
+//       CROSS JOIN LATERAL (
+//           SELECT 
+//               m[1]::int AS start_year,
+//               m[2]::int AS end_year,
+//               value
+//           FROM unnest(p.compatibility) AS c(value)
+//           CROSS JOIN LATERAL regexp_matches(value, '(\\d{4})-(\\d{4})') AS m
+//       ) AS comp
+//       WHERE 
+//           $1::int BETWEEN comp.start_year AND comp.end_year
+//           AND LOWER(comp.value) LIKE '%' || LOWER($2) || '%'
+//           AND LOWER(comp.value) LIKE '%' || LOWER($3) || '%'
+//           AND (
+//               p.name ILIKE $4 OR
+//               p.brand ILIKE $4 OR
+//               p.category ILIKE $4 OR
+//               p.features::text ILIKE $4
+//           )
+//       ORDER BY p.rating DESC, p.best_value_score DESC;
+//     `;
+
+//     const params = [
+//       year,      // $1
+//       make,      // $2
+//       model,     // $3
+//       search     // $4
+//     ];
+
+//     const result = await db.query(sql, params);
+//     res.json(result.rows);
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// });
 
 // Get search suggestions (for autocomplete)
 router.get('/suggestions', searchController.getSearchSuggestions);
