@@ -1,5 +1,5 @@
 // controllers/checkoutController.js
-const Order = require('../models/Order');
+const Order = require('../models/order');
 const ShippingAddress = require('../models/ShippingAddress');
 const { validationResult } = require('express-validator');
 
