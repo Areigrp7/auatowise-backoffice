@@ -16,8 +16,20 @@ const limiter = rateLimit({
 // Middleware
 app.use(helmet());
 app.use(limiter);
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
+
+app.use(cors({
+  origin: [
+    "https://autowise.club",
+    "https://www.autowise.club",
+    "http://localhost:3000"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
+app.options("*", cors());
 
 // Routes
 app.use('/api/parts', require('./routes/parts'));
