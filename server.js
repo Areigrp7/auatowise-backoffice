@@ -20,12 +20,14 @@ app.use(limiter);
 // app.use(cors());
 app.use(express.json());
 
+const allowedOrigins = process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',') : [
+  "https://autowise.club",
+  "https://www.autowise.club",
+  "http://localhost:3000"
+];
+
 app.use(cors({
-  origin: [
-    "https://autowise.club",
-    "https://www.autowise.club",
-    "http://localhost:3000"
-  ],
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
