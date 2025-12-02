@@ -40,3 +40,20 @@ exports.getServices = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+exports.getNearbyShops = async (req, res) => {
+  try {
+    const { lat, lng, radius = 5 } = req.query;
+
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'lat and lng are required' });
+    }
+
+    const shops = await Shop.findNearby(lat, lng, radius);
+    res.json(shops);
+
+  } catch (error) {
+    console.error('Error fetching nearby shops:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

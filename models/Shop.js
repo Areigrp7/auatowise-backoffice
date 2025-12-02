@@ -45,6 +45,58 @@ class Shop {
     `);
     return result.rows.map(row => row.service);
   }
+
+static async findNearby(lat, lng, radiusKm) {
+  const query = `
+    SELECT
+      id,
+      name,
+      rating,
+      reviews,
+      distance AS stored_distance,
+      address,
+      phone,
+      website,
+      specialties,
+      services,
+      certifications,
+      hours,
+      next_available,
+      pricing,
+      verified,
+      images,
+      description,
+      coordinates,
+      -- calculate actual geographic distance
+      (
+        6371 * acos(
+          cos(radians($1)) *
+          cos(radians(coordinates[1])) *
+          cos(radians(coordinates[0]) - radians($2)) +
+          sin(radians($1)) *
+          sin(radians(coordinates[1]))
+        )
+      ) AS distance_km
+    FROM shops
+    WHERE (
+      6371 * acos(
+        cos(radians($1)) *
+        cos(radians(coordinates[1])) *
+        cos(radians(coordinates[0]) - radians($2)) +
+        sin(radians($1)) *
+        sin(radians(coordinates[1]))
+      )
+    ) <= $3
+    ORDER BY distance_km ASC;
+  `;
+
+  const values = [lat, lng, radiusKm];
+  const result = await db.query(query, values);
+  return result.rows;
+}
+
+
+
 }
 
 module.exports = Shop;
