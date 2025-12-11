@@ -57,3 +57,26 @@ exports.getNearbyShops = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+exports.addShop = async (req, res) => {
+  try {
+    const newShop = await Shop.create(req.body);
+    res.status(201).json({ success: true, data: { id: newShop.id, ...newShop } });
+  } catch (error) {
+    console.error('Error adding new shop:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+};
+
+exports.updateShop = async (req, res) => {
+  try {
+    const updatedShop = await Shop.update(req.params.id, req.body);
+    if (!updatedShop) {
+      return res.status(404).json({ success: false, error: 'Shop not found' });
+    }
+    res.json({ success: true, data: { id: req.params.id, ...updatedShop } });
+  } catch (error) {
+    console.error('Error updating shop:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+};

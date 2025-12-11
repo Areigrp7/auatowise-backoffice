@@ -7,12 +7,12 @@ const config = {
   // host: process.env.DB_HOST ,
   // password: process.env.DB_PASSWORD ,
   // port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  ssl: { rejectUnauthorized: false },
+    user: "postgres",
+  host: "localhost",
+  database: "autowise",
+  password: "admin",
+  port: 5432,
+  // ssl: { rejectUnauthorized: false },
   connectionTimeoutMillis: 10000, // 10 seconds
   idleTimeoutMillis: 10000
 };
@@ -175,11 +175,11 @@ async function runSchema() {
       CREATE TABLE IF NOT EXISTS shops (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        rating DECIMAL(3,2),
+        rating DECIMAL(3,2) DEFAULT 0,
         reviews INTEGER DEFAULT 0,
-        distance VARCHAR(50),
-        address TEXT,
+        address JSONB,
         phone VARCHAR(20),
+        email VARCHAR(255),
         website VARCHAR(255),
         specialties TEXT[],
         services TEXT[],
@@ -190,7 +190,8 @@ async function runSchema() {
         verified BOOLEAN DEFAULT false,
         images TEXT[],
         description TEXT,
-        coordinates POINT,
+        coordinates JSONB,
+        distanceUnit VARCHAR(50),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -362,10 +363,10 @@ async function seedData() {
 
     // Insert sample shops
     await client.query(`
-      INSERT INTO shops (name, rating, reviews, distance, address, phone, website, specialties, services, certifications, hours, next_available, pricing, verified, images, description) VALUES
-      ('QuickFix Auto Service', 4.8, 324, '1.2 mi', '123 Main St, Downtown', '(555) 123-4567', 'quickfixauto.com', '{"Brakes", "Oil Change", "Diagnostics"}', '{"General Repair", "Maintenance", "Inspection", "Tire Service"}', '{"ASE Certified", "AAA Approved", "NAPA AutoCare"}', '{"Monday": "8:00 AM - 6:00 PM", "Tuesday": "8:00 AM - 6:00 PM", "Wednesday": "8:00 AM - 6:00 PM", "Thursday": "8:00 AM - 6:00 PM", "Friday": "8:00 AM - 6:00 PM", "Saturday": "9:00 AM - 4:00 PM", "Sunday": "Closed"}', 'Today 2:30 PM', 'Moderate', true, '{"shop1.jpg", "shop2.jpg"}', 'Family-owned auto service center with over 20 years of experience. Specializing in brake service and general automotive repair.'),
-      ('Premier Automotive', 4.9, 567, '2.1 mi', '456 Oak Avenue, Midtown', '(555) 987-6543', 'premierauto.com', '{"Engine Repair", "Transmission", "AC Service"}', '{"Engine Diagnostics", "Transmission Repair", "AC Repair", "Electrical"}', '{"ASE Master Technician", "Bosch Authorized", "BMW Specialist"}', '{"Monday": "7:30 AM - 7:00 PM", "Tuesday": "7:30 AM - 7:00 PM", "Wednesday": "7:30 AM - 7:00 PM", "Thursday": "7:30 AM - 7:00 PM", "Friday": "7:30 AM - 7:00 PM", "Saturday": "8:00 AM - 5:00 PM", "Sunday": "10:00 AM - 3:00 PM"}', 'Tomorrow 9:00 AM', 'Premium', true, '{"premier1.jpg", "premier2.jpg"}', 'Premium automotive service specializing in European vehicles and complex engine diagnostics.'),
-      ('City Motors Garage', 4.6, 189, '2.8 mi', '789 Industrial Blvd, East Side', '(555) 456-7890', 'citymotors.com', '{"Tires", "Alignment", "Suspension"}', '{"Tire Installation", "Wheel Alignment", "Suspension Repair", "Brake Service"}', '{"ASE Certified", "Michelin Dealer"}', '{"Monday": "8:00 AM - 5:30 PM", "Tuesday": "8:00 AM - 5:30 PM", "Wednesday": "8:00 AM - 5:30 PM", "Thursday": "8:00 AM - 5:30 PM", "Friday": "8:00 AM - 5:30 PM", "Saturday": "9:00 AM - 2:00 PM", "Sunday": "Closed"}', 'Today 4:00 PM', 'Budget', false, '{"city1.jpg"}', 'Honest and reliable service for all your tire and suspension needs. Competitive pricing and quick turnaround.')
+      INSERT INTO shops (name, rating, reviews, address, phone, website, specialties, services, certifications, hours, next_available, pricing, verified, images, description) VALUES
+      ('QuickFix Auto Service', 4.8, 324, '{"address_line1": "123 Main St", "city": "Downtown", "state": "CA", "zip_code": "12345", "country": "United States"}', '(555) 123-4567', 'quickfixauto.com', '{"Brakes", "Oil Change", "Diagnostics"}', '{"General Repair", "Maintenance", "Inspection", "Tire Service"}', '{"ASE Certified", "AAA Approved", "NAPA AutoCare"}', '{"Monday": "8:00 AM - 6:00 PM", "Tuesday": "8:00 AM - 6:00 PM", "Wednesday": "8:00 AM - 6:00 PM", "Thursday": "8:00 AM - 6:00 PM", "Friday": "8:00 AM - 6:00 PM", "Saturday": "9:00 AM - 4:00 PM", "Sunday": "Closed"}', 'Today 2:30 PM', 'Moderate', true, '{"shop1.jpg", "shop2.jpg"}', 'Family-owned auto service center with over 20 years of experience. Specializing in brake service and general automotive repair.'),
+      ('Premier Automotive', 4.9, 567, '{"address_line1": "456 Oak Avenue", "city": "Midtown", "state": "CA", "zip_code": "67890", "country": "United States"}', '(555) 987-6543', 'premierauto.com', '{"Engine Repair", "Transmission", "AC Service"}', '{"Engine Diagnostics", "Transmission Repair", "AC Repair", "Electrical"}', '{"ASE Master Technician", "Bosch Authorized", "BMW Specialist"}', '{"Monday": "7:30 AM - 7:00 PM", "Tuesday": "7:30 AM - 7:00 PM", "Wednesday": "7:30 AM - 7:00 PM", "Thursday": "7:30 AM - 7:00 PM", "Friday": "7:30 AM - 7:00 PM", "Saturday": "8:00 AM - 5:00 PM", "Sunday": "10:00 AM - 3:00 PM"}', 'Tomorrow 9:00 AM', 'Premium', true, '{"premier1.jpg", "premier2.jpg"}', 'Premium automotive service specializing in European vehicles and complex engine diagnostics.'),
+      ('City Motors Garage', 4.6, 189, '{"address_line1": "789 Industrial Blvd", "city": "East Side", "state": "CA", "zip_code": "10112", "country": "United States"}', '(555) 456-7890', 'citymotors.com', '{"Tires", "Alignment", "Suspension"}', '{"Tire Installation", "Wheel Alignment", "Suspension Repair", "Brake Service"}', '{"ASE Certified", "Michelin Dealer"}', '{"Monday": "8:00 AM - 5:30 PM", "Tuesday": "8:00 AM - 5:30 PM", "Wednesday": "8:00 AM - 5:30 PM", "Thursday": "8:00 AM - 5:30 PM", "Friday": "8:00 AM - 5:30 PM", "Saturday": "9:00 AM - 2:00 PM", "Sunday": "Closed"}', 'Today 4:00 PM', 'Budget', false, '{"city1.jpg"}', 'Honest and reliable service for all your tire and suspension needs. Competitive pricing and quick turnaround.')
       ON CONFLICT DO NOTHING
     `);
 
