@@ -85,8 +85,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/parts', require('./routes/parts'));
-app.use('/api/shops', require('./routes/shops'));
 app.use('/api/vehicles', require('./routes/vehicles'));
+app.use('/api/shops', require('./routes/shops'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/checkout', require('./routes/checkout'));
 app.use('/api/search', require('./routes/search'));
