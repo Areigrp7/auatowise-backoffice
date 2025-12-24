@@ -21,6 +21,7 @@ const allowedOrigins = process.env.CLIENT_ORIGIN ?
     "https://autowise.club",
     "https://www.autowise.club",
     "http://localhost:5173",
+    "http://localhost:5174",
     // Add your Amplify URLs
     "https://*.amplifyapp.com",
     "https://*.amplifyapp.com"
@@ -90,6 +91,8 @@ app.use('/api/shops', require('./routes/shops'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/checkout', require('./routes/checkout'));
 app.use('/api/search', require('./routes/search'));
+app.use('/api/maintenance', require('./routes/maintenance'));
+app.use('/api/quote_requests', require('./routes/quoteRequest'));
 
 // Health check with CORS headers explicitly
 app.get('/health', (req, res) => {

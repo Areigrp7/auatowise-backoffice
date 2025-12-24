@@ -1,14 +1,13 @@
-// controllers/vehiclesController.js
 const Vehicle = require('../models/Vehicle');
 
 exports.addVehicle = async (req, res) => {
   try {
     const { year, make, model, trim, vin, mileage, color, nickname, image_url } = req.body;
     // const userId = req.user.id; // Assuming user ID is available from authentication middleware
+    const userId = 1; // Assuming user ID is available from authentication middleware
 
     const newVehicle = await Vehicle.create({
-      user_id: 1,
-      
+      user_id: userId,
       year,
       make,
       model,
@@ -27,14 +26,9 @@ exports.addVehicle = async (req, res) => {
   }
 };
 
-
-
-
 exports.getVehiclesByUserId = async (req, res) => {
   try {
     const userId = 1; // Assuming user ID is available from authentication middleware
-    // const userId = req.user.id; // Assuming user ID is available from authentication middleware
-
     const vehicles = await Vehicle.findByUserId(userId);
     res.json(vehicles);
   } catch (error) {
