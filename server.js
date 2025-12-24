@@ -25,15 +25,17 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
-      return callback(null, origin); // echo ONE origin only
+      return callback(null, true); // Changed from callback(null, origin) to callback(null, true)
     }
 
     return callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   optionsSuccessStatus: 204,
+  maxAge: 1728000, // 20 days in seconds
 };
 
 /* ===============================
