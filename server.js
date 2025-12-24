@@ -231,6 +231,8 @@ app.use('/api/vehicles', require('./routes/vehicles'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/checkout', require('./routes/checkout'));
 app.use('/api/search', require('./routes/search'));
+app.use('/api/maintenance', require('./routes/maintenance'));
+app.use('/api/quote_requests', require('./routes/quoteRequest'));
 
 // Health check with CORS headers explicitly
 app.get('/health', (req, res) => {
