@@ -236,7 +236,7 @@ app.use('/api/quote_requests', require('./routes/quoteRequest'));
 
 // Health check with CORS headers explicitly
 app.get('/health', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  // res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
