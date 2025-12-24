@@ -16,45 +16,34 @@ app.use((req, res, next) => {
 });
 
 // CORS Configuration
-const allowedOrigins = process.env.CLIENT_ORIGIN ? 
+const allowedOrigins = process.env.CLIENT_ORIGIN ?
   process.env.CLIENT_ORIGIN.split(',') : [
     "https://autowise.club",
     "https://www.autowise.club",
     "http://localhost:5173",
-    "http://localhost:5174",
-    // Add your Amplify URLs
-    "https://*.amplifyapp.com",
-    "https://*.amplifyapp.com"
+    "http://localhost:5174"
   ];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, postman)
+  origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    
-    // Check if origin is in allowedOrigins
-    const isAllowed = allowedOrigins.some(allowedOrigin => {
-      return origin === allowedOrigin || 
-             (allowedOrigin.includes('*') && 
-              origin.endsWith(allowedOrigin.split('*')[1]));
-    });
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.error('CORS Blocked:', origin);
-      callback(new Error('Not allowed by CORS'));
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
+
+    console.error('CORS blocked origin:', origin);
+    return callback(null, false); // IMPORTANT
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: [
-    "Content-Type", 
-    "Authorization", 
+    "Content-Type",
+    "Authorization",
     "X-Requested-With",
     "Accept",
     "Origin"
   ],
-  credentials: true,
+  credentials: false,
   exposedHeaders: ["Content-Length", "Authorization"],
   maxAge: 86400,
   preflightContinue: false,
@@ -97,8 +86,8 @@ app.use('/api/quote_requests', require('./routes/quoteRequest'));
 // Health check with CORS headers explicitly
 app.get('/health', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
