@@ -1,7 +1,9 @@
 // controllers/checkoutController.js
 const Order = require('../models/order');
 const ShippingAddress = require('../models/ShippingAddress');
+const Payment = require('../models/Payment');
 const { validationResult } = require('express-validator');
+const stripe = require('../config/stripe');
 
 // Calculate tax and shipping (simplified)
 const calculateTax = (subtotal, state) => {
@@ -206,7 +208,7 @@ exports.setDefaultAddress = async (req, res) => {
 exports.deleteAddress = async (req, res) => {
   try {
     const address = await ShippingAddress.delete(req.params.addressId, req.user.userId);
-    
+
     if (!address) {
       return res.status(404).json({ error: 'Address not found' });
     }
@@ -215,5 +217,148 @@ exports.deleteAddress = async (req, res) => {
   } catch (error) {
     console.error('Delete address error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Stripe Payment Methods
+exports.createCheckoutSession = async (req, res) => {
+  try {
+    const { items, successUrl, cancelUrl, shippingAddress } = req.body;
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({ error: 'No items provided' });
+    }
+
+    // Convert items to Stripe format
+    const lineItems = items.map(item => ({
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: item.name,
+          description: item.description,
+          images: item.images || [],
+        },
+        unit_amount: Math.round(item.price * 100), // Convert to cents
+      },
+      quantity: item.quantity,
+    }));
+
+    // Calculate total for our database
+    const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    // Create Stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode: 'payment',
+      success_url: successUrl || `${process.env.CLIENT_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl || `${process.env.CLIENT_URL}/checkout/cancel`,
+      customer_email: req.user.email, // Assuming you have email in JWT
+      metadata: {
+        user_id: req.user.userId,
+        total_amount: totalAmount.toString()
+      },
+      shipping_address_collection: {
+        allowed_countries: ['US', 'CA'],
+      },
+      billing_address_collection: 'required',
+    });
+
+    // Store initial payment record
+    await Payment.create({
+      user_id: req.user.userId,
+      stripe_payment_intent_id: null, // Will be updated via webhook
+      amount: totalAmount,
+      currency: 'usd',
+      status: 'pending',
+      items: items,
+      shipping_address: shippingAddress
+    });
+
+    res.json({
+      sessionId: session.id,
+      url: session.url
+    });
+
+  } catch (error) {
+    console.error('Create checkout session error:', error);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+};
+
+exports.createPaymentIntent = async (req, res) => {
+  try {
+    const { amount, currency = 'usd', items, shippingAddress } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+
+    // Create PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: currency,
+      metadata: {
+        user_id: req.user.userId,
+        integration_check: 'accept_a_payment',
+      },
+      description: 'Auto parts purchase',
+      shipping: shippingAddress ? {
+        name: shippingAddress.name,
+        address: {
+          line1: shippingAddress.line1,
+          line2: shippingAddress.line2,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          postal_code: shippingAddress.postalCode,
+          country: shippingAddress.country || 'US',
+        },
+      } : undefined,
+    });
+
+    // Store payment record
+    await Payment.create({
+      user_id: req.user.userId,
+      stripe_payment_intent_id: paymentIntent.id,
+      amount: amount,
+      currency: currency,
+      status: 'pending',
+      items: items,
+      shipping_address: shippingAddress
+    });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id
+    });
+
+  } catch (error) {
+    console.error('Create payment intent error:', error);
+    res.status(500).json({ error: 'Failed to create payment intent' });
+  }
+};
+
+exports.confirmPayment = async (req, res) => {
+  try {
+    const { paymentIntentId } = req.body;
+
+    if (!paymentIntentId) {
+      return res.status(400).json({ error: 'Payment intent ID is required' });
+    }
+
+    // Retrieve the PaymentIntent from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    // Update our payment record
+    const updatedPayment = await Payment.updateStatus(paymentIntentId, paymentIntent.status);
+
+    res.json({
+      status: paymentIntent.status,
+      payment: updatedPayment
+    });
+
+  } catch (error) {
+    console.error('Confirm payment error:', error);
+    res.status(500).json({ error: 'Failed to confirm payment' });
   }
 };

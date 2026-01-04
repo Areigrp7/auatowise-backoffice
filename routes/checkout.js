@@ -17,4 +17,9 @@ router.get('/addresses', auth.verifyToken, checkoutController.getShippingAddress
 router.put('/addresses/:addressId/default', auth.verifyToken, checkoutController.setDefaultAddress);
 router.delete('/addresses/:addressId', auth.verifyToken, checkoutController.deleteAddress);
 
+// Stripe payment endpoints
+router.post('/create-checkout-session', auth.verifyToken, checkoutController.createCheckoutSession);
+router.post('/create-payment-intent', auth.verifyToken, checkoutController.createPaymentIntent);
+router.post('/confirm-payment', auth.verifyToken, checkoutController.confirmPayment);
+
 module.exports = router;

@@ -170,6 +170,22 @@ async function runSchema() {
   )
 `);
 
+    // Create payments table for Stripe integration
+    await client.query(`
+  CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    stripe_payment_intent_id VARCHAR(255) UNIQUE,
+    amount DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'usd',
+    status VARCHAR(50) DEFAULT 'pending',
+    items JSONB,
+    shipping_address JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
     // Shops table
     await client.query(`
       CREATE TABLE IF NOT EXISTS shops (

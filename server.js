@@ -14,6 +14,7 @@ const allowedOrigins = [
   'https://autowise.club',
   'https://www.autowise.club',
   'http://localhost:5173',
+'http://localhost:5174',
 ];
 
 /* ===============================
@@ -78,6 +79,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/checkout', require('./routes/checkout'));
 app.use('/api/search', require('./routes/search'));
 app.use('/api/maintenance', require('./routes/maintenance'));
+app.use('/api/webhooks', require('./routes/webhooks'));
 app.use('/api/quote_requests', require('./routes/quoteRequest'));
 
 /* ===============================
