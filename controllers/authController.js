@@ -1,6 +1,8 @@
 // controllers/authController.js
 const User = require('../models/Users');
+const Shop = require('../models/Shop');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 
 // Generate JWT token
@@ -17,13 +19,13 @@ exports.register = async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: errors.array() 
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
 
-    const { email, password, first_name, last_name, phone } = req.body;
+    const { email, password, first_name, last_name, phone, role } = req.body;
 
     // Create user
     const user = await User.create({
@@ -31,7 +33,8 @@ exports.register = async (req, res) => {
       password,
       first_name,
       last_name,
-      phone
+      phone,
+      role
     });
 
     // Generate token
@@ -45,19 +48,123 @@ exports.register = async (req, res) => {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        phone: user.phone
+        phone: user.phone,
+        role: user.role
       },
       token
     });
 
   } catch (error) {
     console.error('Registration error:', error);
-    
+
     if (error.message === 'User already exists with this email') {
       return res.status(409).json({ error: error.message });
     }
-    
+
     res.status(500).json({ error: 'Internal server error during registration' });
+  }
+};
+
+exports.registerShop = async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+
+    const {
+      // Account Information
+      email,
+      password,
+
+      // Business Information
+      business_name,
+      owner_first_name,
+      owner_last_name,
+      business_phone,
+
+      // Business Address
+      street_address,
+      city,
+      state,
+      zip_code,
+
+      // Business Details
+      business_type,
+      years_in_business,
+      business_license,
+      ein_tax_id,
+      business_description
+    } = req.body;
+
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Prepare user data
+    const userData = {
+      email,
+      password: hashedPassword,
+      first_name: owner_first_name,
+      last_name: owner_last_name,
+      phone: business_phone
+    };
+
+    // Prepare shop data
+    const shopData = {
+      business_name,
+      business_phone,
+      street_address,
+      city,
+      state,
+      zip_code,
+      business_type,
+      years_in_business,
+      business_license,
+      ein_tax_id,
+      business_description
+    };
+
+    // Create user and shop in transaction
+    const { user, shop } = await Shop.createWithUser(userData, shopData);
+
+    // Generate token
+    const token = generateToken(user.id);
+
+    // Return user and shop data
+    res.status(201).json({
+      message: 'Shop registered successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        phone: user.phone,
+        role: user.role
+      },
+      shop: {
+        id: shop.id,
+        name: shop.name,
+        address: shop.address,
+        phone: shop.phone,
+        business_type: shop.business_type,
+        verified: shop.verified
+      },
+      token
+    });
+
+  } catch (error) {
+    console.error('Shop registration error:', error);
+
+    if (error.message === 'User already exists with this email') {
+      return res.status(409).json({ error: error.message });
+    }
+
+    res.status(500).json({ error: 'Internal server error during shop registration' });
   }
 };
 
@@ -96,7 +203,8 @@ exports.login = async (req, res) => {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        phone: user.phone
+        phone: user.phone,
+        role: user.role
       },
       token
     });

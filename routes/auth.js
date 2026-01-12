@@ -7,11 +7,13 @@ const {
   registerValidation,
   loginValidation,
   updateProfileValidation,
-  changePasswordValidation
+  changePasswordValidation,
+  registerShopValidation
 } = require('../middleware/validation');
 
 // Public routes
 router.post('/register', registerValidation, authController.register);
+router.post('/register-shop', registerShopValidation, authController.registerShop);
 router.post('/login', loginValidation, authController.login);
 
 // Protected routes

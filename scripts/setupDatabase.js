@@ -190,6 +190,7 @@ async function runSchema() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS shops (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
         name VARCHAR(255) NOT NULL,
         rating DECIMAL(3,2) DEFAULT 0,
         reviews INTEGER DEFAULT 0,
@@ -208,6 +209,10 @@ async function runSchema() {
         description TEXT,
         coordinates JSONB,
         distanceUnit VARCHAR(50),
+        business_type VARCHAR(100),
+        years_in_business INTEGER,
+        business_license VARCHAR(100),
+        ein_tax_id VARCHAR(20),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -222,6 +227,7 @@ async function runSchema() {
         first_name VARCHAR(100),
         last_name VARCHAR(100),
         phone VARCHAR(20),
+        role VARCHAR(50) DEFAULT 'customer' CHECK (role IN ('customer', 'mechanic', 'admin')),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
