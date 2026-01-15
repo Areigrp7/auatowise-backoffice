@@ -40,7 +40,7 @@ const updateProfileValidation = [
         .withMessage('Last name is required'),
     body('phone')
         .optional()
-        .matches(/^[\+]?[1-9][\d]{0,15}$/)
+        .matches(/^[+]?[1-9][\d]{0,15}$/)
         .withMessage('Please provide a valid phone number')
 ];
 
@@ -77,7 +77,7 @@ const registerShopValidation = [
         .trim()
         .withMessage('Owner last name is required'),
     body('business_phone')
-        .matches(/^[\+]?[1-9][\d]{0,15}$/)
+        .matches(/^[+]?[1-9]\d{0,15}$/)
         .withMessage('Please provide a valid business phone number'),
 
     // Business Address
