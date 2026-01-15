@@ -69,6 +69,51 @@ class Part {
     const result = await db.query('SELECT name FROM categories ORDER BY name');
     return result.rows.map(row => row.name);
   }
+
+  static async create(partData) {
+    const {
+      name, brand, price, original_price, rating, reviews, is_oem, seller,
+      shipping, warranty, in_stock, image_url, best_value_score, features,
+      compatibility, category
+    } = partData;
+
+    const result = await db.query(
+      `INSERT INTO parts (
+        name, brand, price, original_price, rating, reviews, is_oem, seller,
+        shipping, warranty, in_stock, image_url, best_value_score, features,
+        compatibility, category
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       RETURNING *`,
+      [
+        name, brand, price, original_price || null, rating || 0, reviews || 0, is_oem || false, seller || null,
+        shipping || null, warranty || null, in_stock || true, image_url || null, best_value_score || null,
+        features || [], compatibility || [], category || null
+      ]
+    );
+    return result.rows[0];
+  }
+
+  static async update(id, partData) {
+    const fields = Object.keys(partData).map((key, index) => {
+      // Handle array fields (features, compatibility) as they need specific syntax in update
+      if (key === 'features' || key === 'compatibility') {
+        return `${key} = $${index + 2}::text[]`;
+      }
+      return `${key} = $${index + 2}`;
+    }).join(', ');
+    const values = Object.values(partData);
+
+    const result = await db.query(
+      `UPDATE parts SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
+      [id, ...values]
+    );
+    return result.rows[0];
+  }
+
+  static async delete(id) {
+    const result = await db.query('DELETE FROM parts WHERE id = $1 RETURNING id', [id]);
+    return result.rows[0];
+  }
 }
 
 module.exports = Part;
