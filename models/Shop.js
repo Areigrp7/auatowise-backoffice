@@ -46,8 +46,8 @@ class Shop {
     return result.rows.map(row => row.service);
   }
 
-static async findNearby(lat, lng, radiusKm) {
-  const query = `
+  static async findNearby(lat, lng, radiusKm) {
+    const query = `
     SELECT
       id,
       name,
@@ -90,10 +90,10 @@ static async findNearby(lat, lng, radiusKm) {
     ORDER BY distance_km ASC;
   `;
 
-  const values = [lat, lng, radiusKm];
-  const result = await db.query(query, values);
-  return result.rows;
-}
+    const values = [lat, lng, radiusKm];
+    const result = await db.query(query, values);
+    return result.rows;
+  }
 
   static async create(shopData) {
     const {
@@ -143,8 +143,17 @@ static async findNearby(lat, lng, radiusKm) {
   }
 
   static async findByUserId(userId) {
-    const result = await db.query('SELECT * FROM shops WHERE user_id = $1', [userId]);
-    return result.rows[0];
+    const result = await db.query(
+      `SELECT *
+     FROM shops
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    return result.rows;
+    // const result = await db.query('SELECT * FROM shops WHERE user_id = $1', [userId]);
+    // return result.rows[0];
   }
 
   static async createWithUser(userData, shopData) {

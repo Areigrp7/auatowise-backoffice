@@ -9,11 +9,11 @@ const registerValidation = [
     body('password')
         .isLength({ min: 6 })
         .withMessage('Password must be at least 6 characters long'),
-    body('first_name')
+    body('firstName')
         .notEmpty()
         .trim()
         .withMessage('First name is required'),
-    body('last_name')
+    body('lastName')
         .notEmpty()
         .trim()
         .withMessage('Last name is required')

@@ -20,7 +20,7 @@ exports.getShops = async (req, res) => {
 
 exports.getShopById = async (req, res) => {
   try {
-    const shop = await Shop.findById(req.params.id);
+    const shop = await Shop.findByUserId(req.params.id);
     if (!shop) {
       return res.status(404).json({ error: 'Shop not found' });
     }

@@ -8,8 +8,8 @@ const { validationResult } = require('express-validator');
 // Generate JWT token
 const generateToken = (userId) => {
   return jwt.sign(
-    { userId }, 
-    process.env.JWT_SECRET || 'your_jwt_secret', 
+    { userId },
+    process.env.JWT_SECRET || 'your_jwt_secret',
     { expiresIn: '30d' }
   );
 };
@@ -25,14 +25,15 @@ exports.register = async (req, res) => {
       });
     }
 
-    const { email, password, first_name, last_name, phone, role } = req.body;
+    console.log('Register request body:', req.body);
+    const { email, password, firstName, lastName, phone, role } = req.body;
 
     // Create user
     const user = await User.create({
       email,
       password,
-      first_name,
-      last_name,
+      firstName,
+      lastName,
       phone,
       role
     });
@@ -172,9 +173,9 @@ exports.login = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: errors.array() 
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
 
@@ -233,14 +234,14 @@ exports.updateProfile = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: errors.array() 
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
 
     const { first_name, last_name, phone } = req.body;
-    
+
     const user = await User.updateProfile(req.user.userId, {
       first_name,
       last_name,
@@ -262,9 +263,9 @@ exports.changePassword = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: errors.array() 
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
 
@@ -272,7 +273,7 @@ exports.changePassword = async (req, res) => {
 
     // Get user with password
     const user = await User.findByEmail(req.user.email);
-    
+
     // Verify current password
     const isCurrentPasswordValid = await User.verifyPassword(currentPassword, user.password);
     if (!isCurrentPasswordValid) {
